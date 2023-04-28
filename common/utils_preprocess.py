@@ -1,5 +1,6 @@
 import librosa
 import numpy as np
+import pandas as pd
 import torch
 from tqdm import tqdm
 
@@ -22,14 +23,18 @@ class PreprocessFunction:
         return inputs
 
 def get_transcription(data_loader, processor, model, forced_decoder_ids):
-    transcription_list = []
+    transcription_df = pd.DataFrame(columns=['wav', 'transcription'])
     for i, data in (pbar := tqdm(enumerate(data_loader, 0), desc="Transcribing", total=len(data_loader))):
         pbar.set_description(f"Transcribing --> {data['file']}")
         input_features = data['input_features']
         input_features = torch.unsqueeze(torch.Tensor(input_features), dim=0)
         predicted_ids = model.generate(input_features, forced_decoder_ids=forced_decoder_ids)
         transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)
-        transcription_list.extend(transcription)
+        dict_metadata = {
+            'wav': data['file'],
+            'transcription': transcription
+        }
+        transcription_df = transcription_df.append(dict_metadata, ignore_index=True)
 
-    return transcription_list
+    return transcription_df
 

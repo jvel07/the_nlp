@@ -10,7 +10,7 @@ pretrained_model_details:
 paths:
 #  to_labels: 'data/requests/labels_local.csv' # jvel PC
   to_labels: 'data/requests/' # deep 4
-  to_save_metadata: 'data/requests/'
+  to_save_metadata: 'data/requests/transcripts/'
 #  audio_path: '/media/jvel/data/audio/DEPISDA_16k'
   audio_path: '/srv/data/egasj/corpora/requests'
   out_embeddings: 'data/requests/embeddings/'

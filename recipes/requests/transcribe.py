@@ -2,11 +2,9 @@ from datasets import load_dataset, DownloadMode
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 
 import sys
-
-from common.utils import load_config
-
 sys.path.append('../../')
 
+from common.utils import load_config
 from common.utils_preprocess import PreprocessFunction, get_transcription
 from common.csv_generation import create_csv_compare_23
 
@@ -38,14 +36,18 @@ data_files = {
 
 dataset = load_dataset("csv", data_files=data_files, delimiter=",", cache_dir=config['hf_cache_dir'],
                        download_mode=DownloadMode['REUSE_DATASET_IF_EXISTS'])
-train_dataset = dataset["train"]
-preprocess = PreprocessFunction(processor, sampling_rate=16000)
-train_loader = train_dataset.map(preprocess.preprocess_function,
-                                  batched=True,
-                                  batch_size=1,
-                                  keep_in_memory=False
-                                  )
 
-transcription_list = get_transcription(train_loader, processor, model, forced_decoder_ids)
+for data_set in ['train', 'dev', 'test']:
+    sub_set = dataset[data_set]
+    preprocess = PreprocessFunction(processor, sampling_rate=16000)
+    print("Preprocessing {} dataset".format(data_set))
+    dataset_loader = sub_set.map(preprocess.preprocess_function,
+                                      batched=True,
+                                      batch_size=1,
+                                      keep_in_memory=False
+                                      )
+    print("Generating transcriptions for {} dataset".format(data_set))
+    transcripts_df = get_transcription(dataset_loader, processor, model, forced_decoder_ids)
 
+    transcripts_df.to_csv('{0}/{1}_transcriptions.csv'.format(save_path, data_set), index=False)
 

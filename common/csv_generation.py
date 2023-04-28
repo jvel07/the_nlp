@@ -23,7 +23,7 @@ def create_csv_compare_23(in_path, out_file):
         audio_list.sort()
 
         final_list = []
-        audio_list = audio_list[0:20]
+        # audio_list = audio_list[0:5]
         for wav_path in tqdm(audio_list, total=len(audio_list)):
             file_name = os.path.basename(wav_path)
             final_list.append(wav_path + ',' + str(file_name))
