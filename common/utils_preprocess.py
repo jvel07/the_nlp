@@ -1,6 +1,8 @@
 import librosa
 import numpy as np
 import pandas as pd
+import os
+os.environ['CUDA_VISIBLE_DEVICES']='1'
 import torch
 from tqdm import tqdm
 
@@ -9,6 +11,7 @@ def speech_to_array(path):
     speech, _ = librosa.load(path, sr=None)
     # batch["speech"] = speech
     return speech
+
 
 class PreprocessFunction:
     def __init__(self, processor, sampling_rate):
@@ -22,12 +25,15 @@ class PreprocessFunction:
 
         return inputs
 
+
 def get_transcription(data_loader, processor, model, forced_decoder_ids):
     transcription_df = pd.DataFrame(columns=['wav', 'transcription'])
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     for i, data in (pbar := tqdm(enumerate(data_loader, 0), desc="Transcribing", total=len(data_loader))):
         pbar.set_description(f"Transcribing --> {data['file']}")
         input_features = data['input_features']
-        input_features = torch.unsqueeze(torch.Tensor(input_features), dim=0)
+        input_features = torch.unsqueeze(torch.Tensor(input_features), dim=0).to(device)
+        model.to(device)
         predicted_ids = model.generate(input_features, forced_decoder_ids=forced_decoder_ids)
         transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)
         dict_metadata = {
